@@ -67,7 +67,14 @@ class HuggingFaceChatbot:
             # Handle empty response from API
             return "I'm sorry, I couldn't generate a response. The model might be unavailable or rate limited. Please try again later."
         except Exception as e:
-            return f"Error ({type(e).__name__}): {str(e)}"
+            # More detailed error message with troubleshooting info
+            error_msg = f"Error ({type(e).__name__}): {str(e)}\n\n"
+            error_msg += "Possible solutions:\n"
+            error_msg += "1. Check if HUGGINGFACE_API_KEY is set in .env file\n"
+            error_msg += f"2. Verify the model '{self.model_name}' is available on HuggingFace\n"
+            error_msg += "3. Check your internet connection\n"
+            error_msg += "4. You may have hit the rate limit - try again later"
+            return error_msg
 
     def reset_conversation(self):
         """Clear the conversation history"""
