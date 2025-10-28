@@ -3,9 +3,24 @@ import discord
 from discord.ext import commands
 from dotenv import load_dotenv
 from chatbot import HuggingFaceChatbot
+from threading import Thread
+from flask import Flask
 
 # Load environment variables
 load_dotenv()
+
+# Create a simple Flask app for health checks
+flask_app = Flask(__name__)
+
+@flask_app.route('/')
+def health_check():
+    """Health check endpoint for deployment platforms"""
+    return {'status': 'ok', 'bot': 'running'}, 200
+
+@flask_app.route('/health')
+def health():
+    """Alternative health check endpoint"""
+    return {'status': 'healthy'}, 200
 
 class DiscordChatBot(commands.Bot):
     def __init__(self):
@@ -126,6 +141,11 @@ async def help_command(ctx):
     )
     await ctx.send(embed=embed)
 
+def run_flask():
+    """Run Flask server in a separate thread"""
+    port = int(os.getenv("PORT", 8080))
+    flask_app.run(host='0.0.0.0', port=port, debug=False, use_reloader=False)
+
 def main():
     """Main function to run the bot"""
     # Get Discord token from environment variable
@@ -137,7 +157,14 @@ def main():
         print("DISCORD_BOT_TOKEN=your_token_here")
         return
 
-    # Run the bot
+    # Start Flask server in background thread for health checks
+    port = int(os.getenv("PORT", 8080))
+    print(f"Starting health check server on port {port}...")
+    flask_thread = Thread(target=run_flask, daemon=True)
+    flask_thread.start()
+
+    # Run the Discord bot
+    print("Starting Discord bot...")
     try:
         bot.run(discord_token)
     except discord.LoginFailure:
