@@ -1,194 +1,141 @@
-# HuggingFace Chatbot với Python
+# Discord AI Chatbot
 
-Dự án chatbot sử dụng HuggingFace API và Python Flask.
+Bot Discord sử dụng HuggingFace API để trò chuyện thông minh với người dùng.
 
-## Cài đặt
+## Setup Nhanh
 
-### 1. Tạo Virtual Environment
+### 1. Cài đặt Python Dependencies
 
 ```bash
+# Tạo và kích hoạt virtual environment
 python -m venv venv
-```
+venv\Scripts\activate  # Windows
+# source venv/bin/activate  # Linux/Mac
 
-### 2. Kích hoạt Virtual Environment
-
-**Windows:**
-```bash
-venv\Scripts\activate
-```
-
-**Linux/Mac:**
-```bash
-source venv/bin/activate
-```
-
-### 3. Cài đặt Dependencies
-
-```bash
+# Cài đặt packages
 pip install -r requirements.txt
 ```
 
-### 4. Cấu hình API Key
+### 2. Cấu hình API Keys
 
-1. Copy file `.env.example` thành `.env`:
+Tạo file `.env` từ template:
+
 ```bash
-copy .env.example .env
+copy .env.example .env  # Windows
+# cp .env.example .env  # Linux/Mac
 ```
 
-2. Lấy API key từ HuggingFace:
-   - Truy cập: https://huggingface.co/settings/tokens
-   - Tạo token mới (read access)
-   - Copy token
+Thêm API keys vào file `.env`:
 
-3. Mở file `.env` và thêm API key:
+```env
+# HuggingFace API Key (bắt buộc)
+HUGGINGFACE_API_KEY=hf_your_key_here
+
+# Discord Bot Token (bắt buộc để chạy Discord bot)
+DISCORD_BOT_TOKEN=your_discord_token_here
+
+# Model name (tùy chọn)
+HUGGINGFACE_MODEL=Qwen/Qwen2.5-72B-Instruct
 ```
-HUGGINGFACE_API_KEY=your_actual_api_key_here
-```
 
-## Chạy Demo
+**Lấy API keys:**
 
-### ⚡ CÁCH NHANH NHẤT (Dành cho người mới)
+- HuggingFace: https://huggingface.co/settings/tokens
+- Discord: Xem hướng dẫn chi tiết trong [DISCORD_SETUP.md](DISCORD_SETUP.md)
 
-**Chạy server (chỉ cần double-click):**
-- Double-click vào file `start_server.bat`
-- Server sẽ tự động chạy tại http://localhost:5000
+### 3. Chạy Bot
 
-**Test nhanh (chỉ cần double-click):**
-- Double-click vào file `test_chat.bat`
-- Sẽ test chatbot ngay lập tức
-
-### Hoặc dùng lệnh trong Terminal:
-
-**Chạy Flask API Server:**
 ```bash
-# Cách 1: Dùng file .bat (Windows)
-start_server.bat
-
-# Cách 2: Lệnh đầy đủ
-cd src
-..\venv\Scripts\python.exe app_flask.py
-
-# Cách 3: Nếu đã activate venv
-cd src
-python app_flask.py
-```
-
-Server sẽ chạy tại: http://localhost:5000
-
-**Chạy test nhanh:**
-```bash
-test_chat.bat
-```
-
-**Chạy Console Demo (chat trong terminal):**
-```bash
-venv\Scripts\python.exe demo.py
-```
-
-## Sử dụng API
-
-### 1. Test API với cURL
-
-**Chat endpoint:**
-```bash
-curl -X POST http://localhost:5000/chat ^
-  -H "Content-Type: application/json" ^
-  -d "{\"message\": \"Hello, how are you?\"}"
-```
-
-**Reset conversation:**
-```bash
-curl -X POST http://localhost:5000/reset ^
-  -H "Content-Type: application/json"
-```
-
-### 2. Test API với Python
-
-```python
-import requests
-
-# Send message
-response = requests.post(
-    'http://localhost:5000/chat',
-    json={'message': 'Tell me a joke'}
-)
-print(response.json())
-
-# Reset conversation
-response = requests.post('http://localhost:5000/reset')
-print(response.json())
-```
-
-## Các Model Được Đề Xuất
-
-1. **mistralai/Mistral-7B-Instruct-v0.1** (Recommended)
-   - Model mạnh, đa năng
-   - Tốt cho hầu hết các tác vụ
-
-2. **HuggingFaceH4/zephyr-7b-beta**
-   - Model chat tốt
-   - Phản hồi tự nhiên
-
-3. **microsoft/DialoGPT-medium**
-   - Nhẹ, nhanh
-   - Tốt cho chat đơn giản
-
-4. **tiiuae/falcon-7b-instruct**
-   - Instruction following tốt
-   - Đa dạng trong câu trả lời
-
-## Cấu trúc Project
+# Chạy Discord bot
+python discord_bot.py
 
 ```
-MY_AI_AGENT/
-├── src/
-│   ├── chatbot.py         # Core chatbot class
-│   └── app_flask.py       # Flask API server
-├── demo.py                # Console demo script
-├── requirements.txt       # Python dependencies
-├── .env                   # API keys (create this)
-└── .env.example          # Environment template
+
+## Các File Chính
+
+- **[discord_bot.py](discord_bot.py)** - Discord bot chính (chạy file này)
+
+## Sử dụng Discord Bot
+
+Sau khi bot đã online:
+
+1. **Chat với bot**: Mention bot và gửi tin nhắn
+
+   ```
+   @YourBot Hello, how are you?
+   ```
+
+2. **Các lệnh hữu ích**:
+   - `!reset` - Xóa lịch sử hội thoại
+   - `!ping` - Kiểm tra bot có hoạt động không
+   - `!help_bot` - Hiển thị hướng dẫn
+
+## Models Được Hỗ Trợ
+
+Có thể thay đổi model trong file `.env`:
+
+```env
+# Qwen (mạnh, đa năng)
+HUGGINGFACE_MODEL=Qwen/Qwen2.5-72B-Instruct
+
+# Mistral (cân bằng)
+HUGGINGFACE_MODEL=mistralai/Mistral-7B-Instruct-v0.1
+
+# DialoGPT (nhẹ, nhanh)
+HUGGINGFACE_MODEL=microsoft/DialoGPT-medium
+
+# Llama (mạnh mẽ)
+HUGGINGFACE_MODEL=meta-llama/Llama-3.2-3B-Instruct
 ```
 
 ## Troubleshooting
 
-### Lỗi: "No module named 'dotenv'"
+### Bot không kết nối Discord
+
+- Kiểm tra `DISCORD_BOT_TOKEN` trong `.env`
+- Xem hướng dẫn setup Discord bot: [DISCORD_SETUP.md](DISCORD_SETUP.md)
+
+### Lỗi API Key
+
+```
+ERROR: HUGGINGFACE_API_KEY not found
+```
+
+- Tạo file `.env` và thêm API key từ HuggingFace
+- Đảm bảo key có format: `hf_...`
+
+### Model không trả lời
+
+- Kiểm tra model có tồn tại trên HuggingFace
+- Một số model cần request access trước khi dùng
+- Thử model khác (xem danh sách phía trên)
+
+### Lỗi import module
+
 ```bash
-pip install python-dotenv
+pip install -r requirements.txt --upgrade
 ```
 
-### Lỗi: "API key not found"
-- Kiểm tra file `.env` đã được tạo
-- Đảm bảo `HUGGINGFACE_API_KEY` được set đúng
+## Tài Liệu Khác
 
-### Lỗi: "Model requires access"
-- Một số model cần approval trên HuggingFace
-- Truy cập model page và request access
-- Hoặc dùng model khác
+- [DISCORD_SETUP.md](DISCORD_SETUP.md) - Hướng dẫn setup Discord bot chi tiết
+- [HUONG_DAN_DON_GIAN.md](HUONG_DAN_DON_GIAN.md) - Hướng dẫn đơn giản bằng tiếng Việt
+- [HUONG_DAN_GIT.md](HUONG_DAN_GIT.md) - Hướng dẫn sử dụng Git
 
-### Lỗi kết nối API
-- Kiểm tra internet connection
-- Verify API key còn valid
-- Check HuggingFace status: https://status.huggingface.co/
+## Cấu Trúc Project
 
-## Mở rộng
-
-### Thay đổi Model
-
-Trong [app_flask.py](src/app_flask.py:17):
-```python
-chatbot = HuggingFaceChatbot(model_name="your-model-name")
 ```
-
-Hoặc trong [demo.py](demo.py), bạn có thể nhập tên model khi chạy.
-
-### Thêm tính năng mới
-
-Edit [chatbot.py](src/chatbot.py) để thêm:
-- System prompts
-- Temperature control
-- Max tokens settings
-- Conversation memory
+MY_AI_AGENT/
+├── discord_bot.py         # Discord bot entry point
+├── chatbot.py             # HuggingFace chatbot core
+├── demo.py                # Interactive terminal demo
+├── quick_test.py          # Quick test script
+├── test_qwen_model.py     # Qwen model test
+├── requirements.txt       # Python dependencies
+├── .env                   # API keys (tạo file này)
+├── .env.example           # Template
+└── venv/                  # Virtual environment
+```
 
 ## License
 

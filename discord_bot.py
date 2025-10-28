@@ -2,7 +2,7 @@ import os
 import discord
 from discord.ext import commands
 from dotenv import load_dotenv
-from src.chatbot import HuggingFaceChatbot
+from chatbot import HuggingFaceChatbot
 
 # Load environment variables
 load_dotenv()
