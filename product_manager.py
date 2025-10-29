@@ -1,14 +1,21 @@
 """
 Product Manager for E-commerce Chatbot
-Manages product database in MongoDB
+Manages product database in MongoDB with Pydantic validation
 """
 
 import os
+import sys
 from pymongo import MongoClient, ASCENDING, DESCENDING
 from pymongo.errors import ConnectionFailure, OperationFailure
 from dotenv import load_dotenv
 from datetime import datetime
 from bson.objectid import ObjectId
+from pydantic import ValidationError
+from schemas.product_schema import ProductSchema, create_product_document
+
+# Fix encoding for Windows console
+if sys.platform == 'win32':
+    sys.stdout.reconfigure(encoding='utf-8')
 
 load_dotenv()
 
@@ -68,7 +75,7 @@ class ProductManager:
                    currency="VND", stock=0, specifications=None,
                    images=None, rating=0.0, tags=None):
         """
-        Add a new product to database
+        Add a new product to database with Pydantic validation
 
         Args:
             name (str): Product name
@@ -85,33 +92,31 @@ class ProductManager:
 
         Returns:
             str: Product ID
+
+        Raises:
+            ValueError: If validation fails
         """
-        if specifications is None:
-            specifications = {}
-        if images is None:
-            images = []
-        if tags is None:
-            tags = []
+        try:
+            # Use Pydantic validation
+            product = create_product_document(
+                name=name,
+                description=description,
+                category=category,
+                brand=brand,
+                price=price,
+                currency=currency,
+                stock=stock,
+                specifications=specifications,
+                images=images,
+                rating=rating,
+                tags=tags
+            )
 
-        product = {
-            "name": name,
-            "description": description,
-            "category": category,
-            "brand": brand,
-            "price": price,
-            "currency": currency,
-            "stock": stock,
-            "specifications": specifications,
-            "images": images,
-            "rating": rating,
-            "tags": tags,
-            "created_at": datetime.utcnow(),
-            "updated_at": datetime.utcnow(),
-            "embedding": None  # Will be filled by RAG system
-        }
+            result = self.products_collection.insert_one(product)
+            return str(result.inserted_id)
 
-        result = self.products_collection.insert_one(product)
-        return str(result.inserted_id)
+        except ValidationError as e:
+            raise ValueError(f"Product validation failed: {e}")
 
     def update_product_embedding(self, product_id, embedding):
         """Update product embedding vector"""
