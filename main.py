@@ -1,24 +1,23 @@
 """
-REST API for Product Consultation Chatbot
-E-commerce chatbot API for frontend integration
+MY_AI_AGENT - Main Entry Point
+E-commerce Product Consultation Chatbot API
 """
 
-import os
+import sys
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from dotenv import load_dotenv
-from product_chatbot import ProductChatbot
-from product_manager import ProductManager
 import uuid
 
-load_dotenv()
+from src.config import settings
+from src.services import ProductService, ChatbotService
 
+# Create Flask app
 app = Flask(__name__)
 CORS(app)
 
-# Initialize chatbot
+# Global instances
 chatbot = None
-product_manager = None
+product_service = None
 
 
 def get_chatbot():
@@ -26,21 +25,25 @@ def get_chatbot():
     global chatbot
     if chatbot is None:
         try:
-            chatbot = ProductChatbot()
+            chatbot = ChatbotService()
         except Exception as e:
             print(f"Failed to initialize chatbot: {e}")
             raise
     return chatbot
 
 
-def get_product_manager():
-    """Get product manager instance"""
-    global product_manager
-    if product_manager is None:
-        product_manager = ProductManager()
-        product_manager.connect()
-    return product_manager
+def get_product_service():
+    """Get product service instance"""
+    global product_service
+    if product_service is None:
+        product_service = ProductService()
+        product_service.connect()
+    return product_service
 
+
+# ============================================================================
+# API ROUTES
+# ============================================================================
 
 @app.route('/health', methods=['GET'])
 def health_check():
@@ -62,24 +65,7 @@ def health_check():
 
 @app.route('/api/chat', methods=['POST'])
 def chat():
-    """
-    Chat with product consultation bot
-
-    Request:
-    {
-        "message": "Tìm laptop dưới 20 triệu",
-        "session_id": "optional"
-    }
-
-    Response:
-    {
-        "response": "bot response",
-        "products": [...],
-        "found_products": true,
-        "session_id": "session-id",
-        "status": "success"
-    }
-    """
+    """Chat with product consultation bot"""
     try:
         data = request.get_json()
 
@@ -110,30 +96,7 @@ def chat():
 
 @app.route('/api/products/add', methods=['POST'])
 def add_product():
-    """
-    Add new product
-
-    Request:
-    {
-        "name": "iPhone 15 Pro",
-        "description": "...",
-        "category": "Điện thoại",
-        "brand": "Apple",
-        "price": 28990000,
-        "currency": "VND",
-        "stock": 50,
-        "specifications": {...},
-        "images": [...],
-        "rating": 4.8,
-        "tags": [...]
-    }
-
-    Response:
-    {
-        "product_id": "id",
-        "status": "success"
-    }
-    """
+    """Add new product"""
     try:
         data = request.get_json()
 
@@ -175,29 +138,7 @@ def add_product():
 
 @app.route('/api/products/search', methods=['POST'])
 def search_products():
-    """
-    Search products
-
-    Request:
-    {
-        "query": "laptop gaming",
-        "top_k": 5,
-        "filters": {
-            "category": "Laptop",
-            "brand": "ASUS",
-            "min_price": 10000000,
-            "max_price": 30000000,
-            "in_stock_only": true
-        }
-    }
-
-    Response:
-    {
-        "products": [...],
-        "count": 5,
-        "status": "success"
-    }
-    """
+    """Search products"""
     try:
         data = request.get_json()
 
@@ -246,25 +187,12 @@ def search_products():
 
 @app.route('/api/products/list', methods=['GET'])
 def list_products():
-    """
-    List all products with filters
-
-    Query params:
-    - category: filter by category
-    - brand: filter by brand
-
-    Response:
-    {
-        "products": [...],
-        "count": 50,
-        "status": "success"
-    }
-    """
+    """List all products with filters"""
     try:
         category = request.args.get('category')
         brand = request.args.get('brand')
 
-        pm = get_product_manager()
+        pm = get_product_service()
         products = pm.get_all_products(category=category, brand=brand)
 
         return jsonify({
@@ -299,17 +227,9 @@ def list_products():
 
 @app.route('/api/products/<product_id>', methods=['GET'])
 def get_product(product_id):
-    """
-    Get product details by ID
-
-    Response:
-    {
-        "product": {...},
-        "status": "success"
-    }
-    """
+    """Get product details by ID"""
     try:
-        pm = get_product_manager()
+        pm = get_product_service()
         product = pm.get_product_by_id(product_id)
 
         if not product:
@@ -346,18 +266,9 @@ def get_product(product_id):
 
 @app.route('/api/products/categories', methods=['GET'])
 def get_categories():
-    """
-    Get all product categories
-
-    Response:
-    {
-        "categories": ["Laptop", "Điện thoại", ...],
-        "count": 5,
-        "status": "success"
-    }
-    """
+    """Get all product categories"""
     try:
-        pm = get_product_manager()
+        pm = get_product_service()
         categories = pm.get_categories()
 
         return jsonify({
@@ -375,18 +286,9 @@ def get_categories():
 
 @app.route('/api/products/brands', methods=['GET'])
 def get_brands():
-    """
-    Get all brands
-
-    Response:
-    {
-        "brands": ["Apple", "Samsung", ...],
-        "count": 10,
-        "status": "success"
-    }
-    """
+    """Get all brands"""
     try:
-        pm = get_product_manager()
+        pm = get_product_service()
         brands = pm.get_brands()
 
         return jsonify({
@@ -404,25 +306,12 @@ def get_brands():
 
 @app.route('/api/products/top-rated', methods=['GET'])
 def get_top_rated():
-    """
-    Get top-rated products
-
-    Query params:
-    - limit: number of products (default: 10)
-    - category: filter by category
-
-    Response:
-    {
-        "products": [...],
-        "count": 10,
-        "status": "success"
-    }
-    """
+    """Get top-rated products"""
     try:
         limit = request.args.get('limit', 10, type=int)
         category = request.args.get('category')
 
-        pm = get_product_manager()
+        pm = get_product_service()
         products = pm.get_top_rated_products(limit=limit, category=category)
 
         return jsonify({
@@ -452,20 +341,7 @@ def get_top_rated():
 
 @app.route('/api/statistics', methods=['GET'])
 def get_statistics():
-    """
-    Get database statistics
-
-    Response:
-    {
-        "total_products": 100,
-        "in_stock": 85,
-        "out_of_stock": 15,
-        "categories": [...],
-        "brands": [...],
-        "price_range": {...},
-        "status": "success"
-    }
-    """
+    """Get database statistics"""
     try:
         bot = get_chatbot()
         stats = bot.get_statistics()
@@ -484,15 +360,7 @@ def get_statistics():
 
 @app.route('/api/products/refresh', methods=['POST'])
 def refresh_cache():
-    """
-    Refresh product cache
-
-    Response:
-    {
-        "status": "success",
-        "message": "Cache refreshed"
-    }
-    """
+    """Refresh product cache"""
     try:
         bot = get_chatbot()
         bot.refresh_cache()
@@ -525,16 +393,17 @@ def internal_error(e):
     }), 500
 
 
-if __name__ == '__main__':
-    port = int(os.getenv('PORT', 5000))
-    debug_mode = os.getenv('DEBUG', 'False').lower() == 'true'
+# ============================================================================
+# MAIN
+# ============================================================================
 
-    print("\n" + "="*60)
-    print("PRODUCT CONSULTATION CHATBOT API")
-    print("="*60)
-    print(f"Port: {port}")
-    print(f"Debug: {debug_mode}")
-    print("\nEndpoints:")
+def main():
+    """Main entry point"""
+    # Display settings
+    settings.display_settings()
+
+    # Display endpoints
+    print("API Endpoints:")
     print("  GET  /health")
     print("  POST /api/chat - Chat với bot tư vấn")
     print("  POST /api/products/add - Thêm sản phẩm")
@@ -546,14 +415,24 @@ if __name__ == '__main__':
     print("  GET  /api/products/top-rated - Top sản phẩm")
     print("  GET  /api/statistics - Thống kê")
     print("  POST /api/products/refresh - Refresh cache")
-    print("="*60 + "\n")
+    print(f"{'='*60}\n")
 
+    # Initialize chatbot
     print("Initializing chatbot...")
     try:
         get_chatbot()
         print("✓ Chatbot ready!\n")
     except Exception as e:
         print(f"✗ Failed: {e}\n")
-        exit(1)
+        sys.exit(1)
 
-    app.run(host='0.0.0.0', port=port, debug=debug_mode)
+    # Start server
+    app.run(
+        host=settings.HOST,
+        port=settings.PORT,
+        debug=settings.DEBUG
+    )
+
+
+if __name__ == '__main__':
+    main()

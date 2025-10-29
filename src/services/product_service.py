@@ -1,58 +1,48 @@
 """
-Product Manager for E-commerce Chatbot
-Manages product database in MongoDB with Pydantic validation
+Product Service
+Business logic for product management
 """
 
-import os
-import sys
-from pymongo import MongoClient, ASCENDING, DESCENDING
-from pymongo.errors import ConnectionFailure, OperationFailure
-from dotenv import load_dotenv
+from pymongo import ASCENDING, DESCENDING
+from pymongo.errors import OperationFailure
 from datetime import datetime
 from bson.objectid import ObjectId
 from pydantic import ValidationError
-from schemas.product_schema import ProductSchema, create_product_document
 
-# Fix encoding for Windows console
-if sys.platform == 'win32':
-    sys.stdout.reconfigure(encoding='utf-8')
-
-load_dotenv()
+from src.config import settings
+from src.models import create_product_document
+from src.utils import MongoDBConnection
 
 
-class ProductManager:
+class ProductService:
+    """
+    Product Service - Handles all product-related operations
+    """
+
     def __init__(self):
-        """Initialize Product Manager"""
-        self.mongo_uri = os.getenv("MONGODB_URI", "mongodb://localhost:27017/")
-        self.db_name = os.getenv("MONGODB_DATABASE", "chatbot_db")
-        self.client = None
-        self.db = None
+        """Initialize Product Service"""
+        self.db_connection = MongoDBConnection()
         self.products_collection = None
 
     def connect(self):
-        """Connect to MongoDB"""
-        try:
-            self.client = MongoClient(self.mongo_uri, serverSelectionTimeoutMS=5000)
-            self.client.admin.command('ping')
+        """
+        Connect to MongoDB and initialize products collection
 
-            self.db = self.client[self.db_name]
-            self.products_collection = self.db['products']
-
-            # Create indexes
+        Returns:
+            bool: True if connected successfully
+        """
+        client, db = self.db_connection.connect()
+        if db is not None:
+            self.products_collection = db['products']
             self._create_indexes()
-
-            print(f"✓ Connected to MongoDB: {self.db_name}")
             return True
-
-        except ConnectionFailure as e:
-            print(f"✗ Failed to connect to MongoDB: {e}")
-            return False
-        except Exception as e:
-            print(f"✗ Error: {e}")
-            return False
+        return False
 
     def _create_indexes(self):
         """Create indexes for efficient queries"""
+        if self.products_collection is None:
+            return
+
         try:
             # Text index for search
             self.products_collection.create_index([
@@ -295,32 +285,8 @@ class ProductManager:
 
     def close(self):
         """Close MongoDB connection"""
-        if self.client:
-            self.client.close()
-            print("✓ MongoDB connection closed")
+        self.db_connection.close()
 
 
-if __name__ == "__main__":
-    # Test Product Manager
-    print("\n" + "="*60)
-    print("PRODUCT MANAGER TEST")
-    print("="*60 + "\n")
-
-    pm = ProductManager()
-
-    if pm.connect():
-        print("\n✓ Connected to database!")
-
-        # Show statistics
-        stats = pm.get_statistics()
-        print("\nProduct Statistics:")
-        print(f"  Total Products: {stats['total_products']}")
-        print(f"  In Stock: {stats['in_stock']}")
-        print(f"  Out of Stock: {stats['out_of_stock']}")
-        print(f"  Categories: {', '.join(stats['categories']) if stats['categories'] else 'None'}")
-        print(f"  Brands: {', '.join(stats['brands']) if stats['brands'] else 'None'}")
-        print(f"  Price Range: {stats['price_range']['min']:,.0f} - {stats['price_range']['max']:,.0f} VND")
-
-        pm.close()
-    else:
-        print("\n✗ Failed to connect!")
+# Backward compatibility alias
+ProductManager = ProductService

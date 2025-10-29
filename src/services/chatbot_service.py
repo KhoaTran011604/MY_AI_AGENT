@@ -9,10 +9,10 @@ from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 from dotenv import load_dotenv
 from huggingface_hub import InferenceClient
-from product_manager import ProductManager
+from src.services.product_service import ProductService as ProductManager
 import re
 
-load_dotenv()
+# Config loaded from settings
 
 
 class ProductChatbot:
@@ -433,3 +433,7 @@ if __name__ == "__main__":
     finally:
         if 'bot' in locals():
             bot.close()
+
+
+# Backward compatibility alias
+ProductChatbot = ProductChatbot if 'ProductChatbot' in dir() else type('ProductChatbot', (), {})
