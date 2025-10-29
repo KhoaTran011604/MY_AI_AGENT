@@ -5,8 +5,10 @@ from huggingface_hub import InferenceClient
 # Load environment variables
 load_dotenv()
 
+        # Initialize HuggingFace chatbot
+model_name = os.getenv("HUGGINGFACE_MODEL", "microsoft/DialoGPT-medium")
 class HuggingFaceChatbot:
-    def __init__(self, model_name="microsoft/DialoGPT-medium"):
+    def __init__(self, model_name=model_name):
         """
         Initialize the chatbot with a HuggingFace model
 

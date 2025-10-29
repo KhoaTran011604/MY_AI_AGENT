@@ -116,6 +116,12 @@ ERROR: HUGGINGFACE_API_KEY not found
 pip install -r requirements.txt --upgrade
 ```
 
+### Lỗi kẹt trong venv
+
+```bash
+deactivate
+```
+
 ## Tài Liệu Khác
 
 - [DISCORD_SETUP.md](DISCORD_SETUP.md) - Hướng dẫn setup Discord bot chi tiết
